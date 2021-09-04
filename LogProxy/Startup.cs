@@ -2,7 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using LogProxy.Messages;
+using LogProxy.Services;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Components.Server.Circuits;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
@@ -25,6 +28,12 @@ namespace LogProxy
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.Configure<AirTableAccessConfig>(Configuration.GetSection("AirTableConfig"));
+            services.AddHttpClient<IAirTableAccess, AirTableAccess>();
+            services.AddTransient<IMessageConverter<IEnumerable<AirTableResponse>, IEnumerable<EnrichedTitleAndText>>,
+                    ToEnrichedTitlesAndTexts>();
+            services.AddTransient<IMessageConverter<IEnumerable<TitleAndText>, AirTableRequest>, ToAirTableRequest>();
+            services.AddSingleton<ILogProxyService, LogProxyService>();
             services.AddControllers();
         }
 
@@ -40,7 +49,7 @@ namespace LogProxy
 
             app.UseRouting();
 
-            app.UseAuthorization();
+            //app.UseAuthorization();
 
             app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
         }
