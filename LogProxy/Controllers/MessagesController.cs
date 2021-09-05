@@ -7,7 +7,15 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace LogProxy.Controllers
 {
-    [Authorize]
+    public class BasicAuthorizationAttribute : AuthorizeAttribute
+    {
+        public BasicAuthorizationAttribute()
+        {
+            Policy = "BasicAuthentication";
+        }
+    }
+    
+    [BasicAuthorizationAttribute]
     [ApiController]
     [Route("[controller]")]
     public class MessagesController : ControllerBase
