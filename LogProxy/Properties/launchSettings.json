@@ -19,7 +19,7 @@
     },
     "LogProxy": {
       "commandName": "Project",
-      "launchBrowser": true,
+      "launchBrowser": false,
       "launchUrl": "messages",
       "applicationUrl": "http://localhost:8080",
       "environmentVariables": {
