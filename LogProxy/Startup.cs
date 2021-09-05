@@ -1,20 +1,14 @@
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using LogProxy.Auth;
 using LogProxy.Messages;
 using LogProxy.Services;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Components.Server.Circuits;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 
 namespace LogProxy
 {
@@ -32,15 +26,23 @@ namespace LogProxy
         {
             services.Configure<AirTableAccessConfig>(Configuration.GetSection("AirTableConfig"));
             services.AddHttpClient<IAirTableAccess, AirTableAccess>();
-            services.AddTransient<IMessageConverter<IEnumerable<AirTableResponse>, IEnumerable<EnrichedTitleAndText>>,
+            services.AddHealthChecks().AddCheck<AirTableHealthCheck>("airTableHealthCheck");
+            services
+                .AddTransient<IMessageConverter<IEnumerable<AirTableResponse>, IEnumerable<EnrichedTitleAndText>>,
                     ToEnrichedTitlesAndTexts>();
             services.AddTransient<IMessageConverter<IEnumerable<TitleAndText>, AirTableRequest>, ToAirTableRequest>();
             services.AddSingleton<ILogProxyService, LogProxyService>();
             services.AddControllers();
             services.Configure<BasicAuthenticatorConfig>(Configuration.GetSection("BasicAuth"));
             services.AddTransient<IBasicAuthenticator, BasicAuthenticator>();
-            services.AddAuthentication("BasicAuthentication")
-                .AddScheme<AuthenticationSchemeOptions, BasicAuthHandler>("BasicAuthentication", null);
+            services
+                .AddAuthentication()
+                .AddScheme<AuthenticationSchemeOptions, BasicAuthHandler>("BasicAuthentication", options => { });
+            services.AddAuthorization(options =>
+            {
+                options.AddPolicy("BasicAuthentication",
+                    new AuthorizationPolicyBuilder("BasicAuthentication").RequireAuthenticatedUser().Build());
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -58,7 +60,11 @@ namespace LogProxy
             app.UseAuthentication();
             app.UseAuthorization();
 
-            app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapControllers();
+                endpoints.MapHealthChecks("/health");
+            });
         }
     }
 }
