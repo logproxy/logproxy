@@ -2,8 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using LogProxy.Auth;
 using LogProxy.Messages;
 using LogProxy.Services;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Components.Server.Circuits;
 using Microsoft.AspNetCore.Hosting;
@@ -35,6 +37,10 @@ namespace LogProxy
             services.AddTransient<IMessageConverter<IEnumerable<TitleAndText>, AirTableRequest>, ToAirTableRequest>();
             services.AddSingleton<ILogProxyService, LogProxyService>();
             services.AddControllers();
+            services.Configure<BasicAuthenticatorConfig>(Configuration.GetSection("BasicAuth"));
+            services.AddTransient<IBasicAuthenticator, BasicAuthenticator>();
+            services.AddAuthentication("BasicAuthentication")
+                .AddScheme<AuthenticationSchemeOptions, BasicAuthHandler>("BasicAuthentication", null);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -49,7 +55,8 @@ namespace LogProxy
 
             app.UseRouting();
 
-            //app.UseAuthorization();
+            app.UseAuthentication();
+            app.UseAuthorization();
 
             app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
         }

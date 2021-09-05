@@ -45,6 +45,7 @@ namespace LogProxy.Services
                 responses.Add(response);
                 offset = response?.Offset;
             } while (!string.IsNullOrWhiteSpace(offset));
+
             return responses;
         }
 
@@ -67,9 +68,9 @@ namespace LogProxy.Services
         private IEnumerable<Fields> Diff(IEnumerable<Fields> requested, IEnumerable<Fields> responded)
         {
             return requested.Where(requestField =>
-                !responded.Any(responseField => responseField.Id == requestField.Id &&
-                                                responseField.Message == requestField.Message &&
-                                                responseField.Summary == requestField.Summary));
+                !responded.Any(responseField =>
+                    responseField.Message == requestField.Message &&
+                    responseField.Summary == requestField.Summary));
         }
     }
 

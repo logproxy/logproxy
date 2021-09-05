@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace LogProxy.Controllers
 {
-    //[Authorize]
+    [Authorize]
     [ApiController]
     [Route("[controller]")]
     public class MessagesController : ControllerBase
